@@ -14,10 +14,16 @@
   $.fn.translate = function(options) {
 
     var that = this; //a reference to ourselves
-	
+
+    var userLang = navigator.language || navigator.userLanguage;
+
+    if (userLang.indexOf('-') > 0) {
+      userLang = userLang.substring(0, userLang.indexOf('-'));
+    }
+
     var settings = {
       css: "trn",
-      lang: "en"/*,
+      lang: [userLang, 'en']/*,
       t: {
         "translate": {
           pt: "tradução",
@@ -28,16 +34,16 @@
     settings = $.extend(settings, options || {});
     if (settings.css.lastIndexOf(".", 0) !== 0)   //doesn't start with '.'
       settings.css = "." + settings.css;
-       
+
     var t = settings.t;
- 
+
     //public methods
     this.lang = function(l) {
       if (l) {
         settings.lang = l;
         this.translate(settings);  //translate everything
       }
-        
+
       return settings.lang;
     };
 
@@ -45,14 +51,25 @@
     this.get = function(index) {
       var res = index;
 
-      try {
-        res = t[index][settings.lang];
+      if (Array.isArray(settings.lang)) {
+        for (var i=0; i<settings.lang.length; i++) {
+          try {
+            res = t[index][settings.lang[i]];
+            if (res) {
+              break;
+            }
+          } catch (e) {
+          }
+        }
+      } else {
+        try {
+          res = t[index][settings.lang];
+        }
+        catch (err) {
+          return index;
+        }
       }
-      catch (err) {
-        //not found, return index
-        return index;
-      }
-      
+
       if (res)
         return res;
       else
@@ -62,7 +79,7 @@
     this.g = this.get;
 
 
-    
+
     //main
     this.find(settings.css).each(function(i) {
       var $this = $(this);
@@ -75,11 +92,11 @@
 
       $this.html(that.get(trn_key));
     });
-    
-    
+
+
 		return this;
-		
-		
+
+
 
   };
 })(jQuery);
